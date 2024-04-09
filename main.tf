@@ -33,7 +33,7 @@ resource "aws_instance" "this" {
         Name = var.instance_name
     }
 
-    ami           = data.aws_ami.latest_centos_ami.arn
+    ami           = data.aws_ami.latest_centos_ami.id
     instance_type = var.instance_type
 
     key_name = var.ssh_key_name
