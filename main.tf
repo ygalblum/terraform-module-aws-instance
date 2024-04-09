@@ -14,11 +14,8 @@ locals {
   myip_cidr = "${chomp(data.http.myip.response_body)}/32"
   vpc_cidr_block = "${data.aws_vpc.current.cidr_block}"
   security_group_ids = concat(
-    concat(
-      [aws_security_group.ssh.id, aws_security_group.outbound.id],
-      var.expose_webui ? [aws_security_group.webui[0].id] : []
-    ),
-    var.ollama_port == 0 ? [] : [aws_security_group.ollama[0].id]
+    [aws_security_group.ssh.id, aws_security_group.outbound.id],
+    length(var.application_ports) == 0 ? [] : [aws_security_group.applications[0].id]
   )
 }
 
@@ -31,19 +28,19 @@ data "aws_ami" "latest_centos_ami" {
   }
 }
 
-resource "aws_instance" "ollama" {
+resource "aws_instance" "this" {
     tags = {
-        Name = "Ygal-Ollama"
+        Name = var.instance_name
     }
 
     ami           = data.aws_ami.latest_centos_ami.arn
-    instance_type = var.ollama_instance_type
+    instance_type = var.instance_type
 
-    key_name = var.key_name
+    key_name = var.ssh_key_name
 
     vpc_security_group_ids = tolist(local.security_group_ids)
 
     root_block_device {
-      volume_size = var.ollama_volume_size
+      volume_size = var.volume_size
     }
 }

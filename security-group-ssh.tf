@@ -1,6 +1,6 @@
 resource "aws_security_group" "ssh" {
-  name = "Ollama SSH"
-  description = "Security group for SSH to Ollama"
+  name = "${var.instance_name} - SSH"
+  description = "Security group for SSH to ${var.instance_name}"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "ssh" {

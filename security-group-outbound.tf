@@ -1,5 +1,5 @@
 resource "aws_security_group" "outbound" {
-  name = "Ygal - Allow all egress"
+  name = "${var.instance_name} - Allow all egress"
   description = "Allow all egress traffic"
 }
 
