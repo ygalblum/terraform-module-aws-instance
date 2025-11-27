@@ -1,5 +1,13 @@
 variable "ssh_key_name" {
-  type = string
+  type    = string
+  default = null
+  description = "Name for the SSH key pair. If null and ssh_public_key is provided, Terraform will auto-generate the name."
+}
+
+variable "ssh_public_key" {
+  type    = string
+  default = null
+  description = "SSH public key content. If provided, a key pair will be created in AWS. If not provided, ssh_key_name must reference an existing key pair."
 }
 
 variable "instance_name" {
