@@ -10,6 +10,17 @@ variable "ssh_public_key" {
   description = "SSH public key content. If provided, a key pair will be created in AWS. If not provided, ssh_key_name must reference an existing key pair."
 }
 
+variable "ami_name" {
+  type        = string
+  description = "AMI name pattern to search for (e.g., 'CentOS Stream 9 x86_64*')"
+}
+
+variable "ami_owner" {
+  type        = string
+  default     = null
+  description = "AWS account ID of the AMI owner. If null, searches all available AMIs."
+}
+
 variable "instance_name" {
     type = string
 }
