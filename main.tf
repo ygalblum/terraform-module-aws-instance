@@ -15,11 +15,6 @@ data "aws_ec2_instance_types" "matching" {
     name   = "instance-type"
     values = ["${var.instance_family}.*"]
   }
-
-  filter {
-    name   = "vcpu-info.default-vcpus"
-    values = [for i in range(var.cpu, 257) : tostring(i)]
-  }
 }
 
 data "aws_ec2_instance_type" "matched_types" {
@@ -54,7 +49,7 @@ locals {
       vcpus  = type_data.default_vcpus
       memory = type_data.memory_size
     }
-    if type_data.memory_size >= var.ram * 1024
+    if type_data.default_vcpus >= var.cpu && type_data.memory_size >= var.ram * 1024
   ]
 
   sorted_by_size = sort([
