@@ -66,10 +66,11 @@ locals {
 
 data "aws_ami" "latest_centos_ami" {
   most_recent = true
-  owners = ["125523088429"]
+  owners      = var.ami_owner != null ? [var.ami_owner] : null
+
   filter {
     name   = "name"
-    values = ["CentOS Stream 9 x86_64*"]
+    values = [var.ami_name]
   }
 }
 
