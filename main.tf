@@ -60,6 +60,14 @@ locals {
   # Select the smallest matching instance type
   instance_type = length(local.sorted_by_size) > 0 ? split("-", local.sorted_by_size[0])[2] : null
 
+  # Infer architecture from selected instance type
+  # Prefer x86_64 if instance supports multiple architectures
+  ami_architecture = local.instance_type != null ? (
+    contains(data.aws_ec2_instance_type.matched_types[local.instance_type].supported_architectures, "x86_64")
+    ? "x86_64"
+    : data.aws_ec2_instance_type.matched_types[local.instance_type].supported_architectures[0]
+  ) : null
+
   # Use created key pair name if available, otherwise use provided ssh_key_name
   ssh_key_name = length(aws_key_pair.this) > 0 ? aws_key_pair.this[0].key_name : var.ssh_key_name
 }
@@ -71,6 +79,12 @@ data "aws_ami" "latest_centos_ami" {
   filter {
     name   = "name"
     values = [var.ami_name]
+  }
+
+  # Filter by inferred architecture
+  filter {
+    name   = "architecture"
+    values = [local.ami_architecture]
   }
 }
 
@@ -94,6 +108,11 @@ resource "aws_instance" "this" {
         precondition {
             condition     = local.instance_type != null
             error_message = "No instance type in family '${var.instance_family}' meets the requirements of ${var.cpu} vCPUs and ${var.ram} GB RAM. Please adjust your requirements or choose a different instance family."
+        }
+
+        precondition {
+            condition     = local.ami_architecture != null
+            error_message = "Could not determine AMI architecture from instance type '${local.instance_type}'. This is unexpected."
         }
     }
 }
