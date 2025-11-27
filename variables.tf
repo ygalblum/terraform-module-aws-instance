@@ -6,9 +6,22 @@ variable "instance_name" {
     type = string
 }
 
-variable "instance_type" {
+variable "instance_family" {
     type = string
-    default = "g4dn.xlarge"
+    default = "t3"
+    description = "EC2 instance family (e.g., t3, t3a, m5, c5)"
+}
+
+variable "cpu" {
+    type = number
+    default = 2
+    description = "Minimum number of vCPUs required"
+}
+
+variable "ram" {
+    type = number
+    default = 4
+    description = "Minimum RAM in GB required"
 }
 
 variable "volume_size" {

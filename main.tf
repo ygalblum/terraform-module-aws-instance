@@ -10,6 +10,29 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+data "aws_ec2_instance_types" "matching" {
+  filter {
+    name   = "instance-type"
+    values = ["${var.instance_family}.*"]
+  }
+
+  filter {
+    name   = "vcpu-info.default-vcpus"
+    values = [for i in range(var.cpu, 257) : tostring(i)]
+  }
+
+  filter {
+    name   = "memory-info.size-in-mib"
+    values = [for i in range(var.ram * 1024, 24576001, 1024) : tostring(i)]
+  }
+}
+
+data "aws_ec2_instance_type" "matched_types" {
+  for_each = toset(data.aws_ec2_instance_types.matching.instance_types)
+
+  instance_type = each.key
+}
+
 locals {
   myip_cidr = "${chomp(data.http.myip.response_body)}/32"
   vpc_cidr_block = "${data.aws_vpc.current.cidr_block}"
@@ -17,6 +40,23 @@ locals {
     [aws_security_group.ssh.id, aws_security_group.outbound.id],
     length(var.application_ports) == 0 ? [] : [aws_security_group.applications[0].id]
   )
+
+  # Sort matching instance types by memory (smallest first), then by vcpus
+  sorted_instances = [
+    for type_name, type_data in data.aws_ec2_instance_type.matched_types : {
+      name   = type_name
+      vcpus  = type_data.default_vcpus
+      memory = type_data.memory_size
+    }
+  ]
+
+  sorted_by_size = sort([
+    for inst in local.sorted_instances :
+    format("%020d-%020d-%s", inst.memory, inst.vcpus, inst.name)
+  ])
+
+  # Select the smallest matching instance type
+  instance_type = length(local.sorted_by_size) > 0 ? split("-", local.sorted_by_size[0])[2] : null
 }
 
 data "aws_ami" "latest_centos_ami" {
@@ -34,7 +74,7 @@ resource "aws_instance" "this" {
     }
 
     ami           = data.aws_ami.latest_centos_ami.id
-    instance_type = var.instance_type
+    instance_type = local.instance_type
 
     key_name = var.ssh_key_name
 
@@ -42,5 +82,12 @@ resource "aws_instance" "this" {
 
     root_block_device {
       volume_size = var.volume_size
+    }
+
+    lifecycle {
+        precondition {
+            condition     = local.instance_type != null
+            error_message = "No instance type in family '${var.instance_family}' meets the requirements of ${var.cpu} vCPUs and ${var.ram} GB RAM. Please adjust your requirements or choose a different instance family."
+        }
     }
 }
