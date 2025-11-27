@@ -33,6 +33,17 @@ data "aws_ec2_instance_type" "matched_types" {
   instance_type = each.key
 }
 
+resource "aws_key_pair" "this" {
+  count = var.ssh_public_key != null ? 1 : 0
+
+  key_name   = var.ssh_key_name
+  public_key = var.ssh_public_key
+
+  tags = {
+    Name = var.instance_name
+  }
+}
+
 locals {
   myip_cidr = "${chomp(data.http.myip.response_body)}/32"
   vpc_cidr_block = "${data.aws_vpc.current.cidr_block}"
@@ -57,6 +68,9 @@ locals {
 
   # Select the smallest matching instance type
   instance_type = length(local.sorted_by_size) > 0 ? split("-", local.sorted_by_size[0])[2] : null
+
+  # Use created key pair name if available, otherwise use provided ssh_key_name
+  ssh_key_name = length(aws_key_pair.this) > 0 ? aws_key_pair.this[0].key_name : var.ssh_key_name
 }
 
 data "aws_ami" "latest_centos_ami" {
@@ -76,7 +90,7 @@ resource "aws_instance" "this" {
     ami           = data.aws_ami.latest_centos_ami.id
     instance_type = local.instance_type
 
-    key_name = var.ssh_key_name
+    key_name = local.ssh_key_name
 
     vpc_security_group_ids = tolist(local.security_group_ids)
 
