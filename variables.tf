@@ -21,6 +21,12 @@ variable "ami_owner" {
   description = "AWS account ID of the AMI owner. If null, searches all available AMIs."
 }
 
+variable "region" {
+  type        = string
+  description = "AWS region for deploying resources. If not specified, uses the default region from the AWS provider configuration (environment, shared config file, etc.)."
+  default     = null
+}
+
 variable "instance_name" {
     type = string
 }
