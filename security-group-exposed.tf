@@ -1,8 +1,10 @@
 resource "aws_security_group" "applications" {
   count = length(var.application_ports) == 0 ? 0 : 1
 
-  name = "${var.instance_name} - Application ports"
+  name        = "${var.instance_name} - Application ports"
   description = "Security group for Application Ports for ${var.instance_name}"
+
+  tags = local.resource_tags
 }
 
 resource "aws_vpc_security_group_ingress_rule" "applications" {

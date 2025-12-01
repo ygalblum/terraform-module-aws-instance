@@ -1,6 +1,8 @@
 resource "aws_security_group" "outbound" {
-  name = "${var.instance_name} - Allow all egress"
+  name        = "${var.instance_name} - Allow all egress"
   description = "Allow all egress traffic"
+
+  tags = local.resource_tags
 }
 
 resource "aws_vpc_security_group_egress_rule" "outbound_all" {

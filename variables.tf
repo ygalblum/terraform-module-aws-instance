@@ -27,6 +27,12 @@ variable "region" {
   default     = null
 }
 
+variable "additional_tags" {
+  type        = map(string)
+  description = "Additional tags to apply to all resources (instance, key pair, security groups). The Name tag is automatically set from instance_name."
+  default     = {}
+}
+
 variable "instance_name" {
     type = string
 }
