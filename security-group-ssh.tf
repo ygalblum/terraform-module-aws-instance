@@ -1,6 +1,8 @@
 resource "aws_security_group" "ssh" {
-  name = "${var.instance_name} - SSH"
+  name        = "${var.instance_name} - SSH"
   description = "Security group for SSH to ${var.instance_name}"
+
+  tags = local.resource_tags
 }
 
 resource "aws_vpc_security_group_ingress_rule" "ssh" {

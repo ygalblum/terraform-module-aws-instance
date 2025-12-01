@@ -29,9 +29,7 @@ resource "aws_key_pair" "this" {
   key_name   = var.ssh_key_name
   public_key = var.ssh_public_key
 
-  tags = {
-    Name = var.instance_name
-  }
+  tags = local.resource_tags
 }
 
 locals {
@@ -68,6 +66,12 @@ locals {
     : data.aws_ec2_instance_type.matched_types[local.instance_type].supported_architectures[0]
   ) : null
 
+  # Merge Name tag with user-provided additional tags
+  resource_tags = merge(
+    { Name = var.instance_name },
+    var.additional_tags
+  )
+
   # Use created key pair name if available, otherwise use provided ssh_key_name
   ssh_key_name = length(aws_key_pair.this) > 0 ? aws_key_pair.this[0].key_name : var.ssh_key_name
 }
@@ -89,9 +93,7 @@ data "aws_ami" "latest_centos_ami" {
 }
 
 resource "aws_instance" "this" {
-    tags = {
-        Name = var.instance_name
-    }
+    tags = local.resource_tags
 
     ami           = data.aws_ami.latest_centos_ami.id
     instance_type = local.instance_type
